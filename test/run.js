@@ -183,6 +183,33 @@ exports['test dynamic properties (bracket notation)'] = function() {
 	});
 }
 
+exports['test function properties'] = function() {
+	util.assertLint("function a() { return {b: 1}; }; var obj = a.b;", {
+		messages : [ {
+			"message": "Unknown property 'b'. Did you mean 'a().b'?",
+			"from": 45,
+			"to": 46,
+			"severity": "warning"} ]
+	});
+
+	util.assertLint("function a() { return {b: 1}; }; var c = {k: a}; var obj = c.k.b;", {
+		messages : [ {
+			"message": "Unknown property 'b'. Did you mean 'k().b'?",
+			"from": 63,
+			"to": 64,
+			"severity": "warning"} ]
+	});
+
+	util.assertLint("Date.now.toFixed();", {
+		messages : [ {
+			"message": "Unknown property 'toFixed'. Did you mean 'now().toFixed'?",
+			"from": 9,
+			"to": 16,
+			"severity": "warning"} ]
+	}, [ "ecma5" ]);
+}
+
+
 
 if (module == require.main)
 	require('test').run(exports)
