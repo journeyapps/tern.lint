@@ -186,10 +186,16 @@
           // If one of them is a function, type.getFunctionType() will return it.
           var fnType = type.getFunctionType();
           if(fnType == null) {
-            addMessage(node, "'" + getName(node) + "' is not a function", rule.severity);        	        	  
+            var parentType = infer.expressionType({node: node.callee.object, state: state});
+            if(parentType == null || parentType.isEmpty()) {
+              // Parent type is empty. This means that this type is a guess at best. To prevent false
+              // warnings, we ignore this case.
+            } else {
+              addMessage(node, "'" + getName(node) + "' is not a function", rule.severity);
+            }
           } else if (fnType.lint) {
-        	  // custom lint for function
-        	  fnType.lint(node, addMessage);
+        	// custom lint for function
+        	fnType.lint(node, addMessage);
           }
         }
       }

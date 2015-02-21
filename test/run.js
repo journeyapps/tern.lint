@@ -122,23 +122,47 @@ exports['test functions parameters'] = function() {
 
 
 exports['test properties on functions parameters'] = function() {
-	// In this case the type of `a` is inferred as an object with a property `len`.
-	util.assertLint("function test(a) { var len = a.len; }; test({len: 5});", {
-		messages : [ ]
-	});
+    // In this case the type of `a` is inferred as an object with a property `len`.
+    util.assertLint("function test(a) { var len = a.len; }; test({len: 5});", {
+        messages : [ ]
+    });
 
-	// In this case the type of `a` is unknown, and should not produce warnings
-	// on any of its properties.
-	util.assertLint("function test(a) { var len = a.len; };", {
-		messages : [ ]
-	});
+    // In this case the type of `a` is unknown, and should not produce warnings
+    // on any of its properties.
+    util.assertLint("function test(a) { var len = a.len; };", {
+        messages : [ ]
+    });
 
-	// The same goes for function calls on an unknown type
-	util.assertLint("function test(a) { var len = a.myLength(); };", {
-		messages : [ ]
-	});
+    // The same goes for function calls on an unknown type
+    util.assertLint("function test(a) { var len = a.myLength(); };", {
+        messages : [ ]
+    });
+
+    // a is an unkown type, but a.PI is guessed to be a number.
+    // It could also be a function on another object, so should not produce a warning.
+    util.assertLint("var Math = {PI: 3.14}; function test(a) { a.PI(); a.foo()};", {
+        messages : [ ]
+    });
+
+    // a is guessed to be of type Math. Same as above.
+    util.assertLint("var Math = {PI: 3.14}; function test(a) { a.PI(); };", {
+        messages : [ ]
+    });
+
+    // a is known to be of type Math. In this case it should produce an error.
+    util.assertLint("var Math = {PI: 3.14}; function test(a) { a.PI(); }; test(Math);", {
+        "messages": [ {
+            "message": "'PI' is not a function",
+            "from": 44,
+            "to": 46,
+            "severity": "error"} ]
+    });
+
+    // a is guessed to be a function or number. No warning.
+    util.assertLint("var Math = {PI: 3.14}; var other = {PI: function() {}}; function test(a) { a.PI(); }; test(Math); test(other)", {
+        messages : [ ]
+    });
 }
-
 
 exports['test assignment of unknown value'] = function() {
 
