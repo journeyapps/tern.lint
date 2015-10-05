@@ -357,22 +357,21 @@
           // Also, the expression may be valid even if the parent type is unknown,
           // since the inference engine cannot detect the type in all cases.
 
-          var propertyDefined = false;
-
           // In some cases the type is unknown, even if the property is defined
-          if(parentType.types) {
-            // We cannot use parentType.hasProp or parentType.props - in the case of an AVal,
-            // this may contain properties that are not really defined.
-            parentType.types.forEach(function(potentialType) {
-              // Obj#hasProp checks the prototype as well
-              if(typeof potentialType.hasProp == 'function' && potentialType.hasProp(prop, true)) {
-                propertyDefined = true;
-              }
-            });
-          }
+          var propertyDefined = isPropertyDefined(parentType, node.property.name);
 
           if(!propertyDefined) {
-            addMessage(node, "Unknown property '" + getNodeName(node) + "'", rule.severity);
+            var suggestion = null;
+            var fn = isPropertyDefinedOnFunction(parentType, node.property.name);
+            if(fn) {
+              suggestion = "Did you mean '" + getNodeName(node.object) + "()." + getNodeName(node) + "'?";
+            }
+
+            var message = "Unknown property '" + getNodeName(node) + "'";
+            if(suggestion) {
+              message += ". " + suggestion;
+            }
+            addMessage(node, message, rule.severity);
           }
         }
       },
@@ -460,6 +459,57 @@
       c(node, node.scope || st)
     }
   });
+
+
+
+  // Check if a parent type defines a property.
+  function isPropertyDefined(parentType, propertyName) {
+    if(typeof parentType.hasProp == 'function' && parentType.hasProp(propertyName, true)) {
+      return true;
+    } else if(parentType.proto && typeof parentType.proto.hasProp == 'function' &&
+          parentType.proto.hasProp(propertyName, true)) {
+      // This is the case for Prim
+      return true;
+    }
+
+    var propertyDefined = false;
+    if(parentType.types) {
+      // AVal
+
+      // We cannot use parentType.getProp or parentType.props - in the case of an AVal,
+      // this may contain properties that are not really defined.
+      parentType.types.forEach(function(potentialType) {
+        // Obj#hasProp checks the prototype as well
+        if(isPropertyDefined(potentialType, propertyName)) {
+          propertyDefined = true;
+        }
+      });
+    }
+    return propertyDefined;
+  }
+
+  function isPropertyDefinedOnFunction(parentType, propertyName) {
+    if(typeof parentType.retval != 'undefined') {
+      // Fn
+      if(isPropertyDefined(parentType.retval, propertyName)) {
+        return parentType;
+      }
+    }
+
+    if(parentType.types) {
+      // AVal
+      var result = null;
+      parentType.types.forEach(function(potentialType) {
+        var fn = isPropertyDefinedOnFunction(potentialType, propertyName);
+        if(fn != null) {
+          result = fn;
+        }
+      });
+      return result;
+    }
+
+    return null;
+  }
 
   // Validate one file
   
