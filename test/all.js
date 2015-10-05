@@ -4,6 +4,7 @@ exports['test unknown property/identifier validation'] = require('./validate_unk
 exports['test unused variable/function validation'] = require('./validate_unused');
 exports['test RegExp validation'] = require('./validate_regexp');
 exports['test multiple types validation'] = require('./validate_multitypes');
+exports['test function property suggestion'] = require('./suggest_function_properties');
 
 // JSDoc
 //exports['test Assignmement JSDoc validation'] = require('./validate_assignmement_jsdoc');
