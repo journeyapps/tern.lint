@@ -150,6 +150,27 @@ exports['test properties on functions parameters'] = function() {
 	util.assertLint("function test(a) { var len = a.myLength(); };", {
 		messages : [ ]
 	}, null, null, IGNORE_UNUSED_VAR);
+
+  // a is an unkown type, but a.PI is guessed to be a number.
+  // It could also be a function on another object, so should not produce a warning.
+  util.assertLint("var Math = {PI: 3.14}; function test(a) { a.PI(); a.foo()};", {
+      messages : [ ]
+  }, null, null, IGNORE_UNUSED_VAR);
+
+  // a is guessed to be of type Math. Same as above.
+  util.assertLint("var Math = {PI: 3.14}; function test(a) { a.PI(); };", {
+      messages : [ ]
+  }, null, null, IGNORE_UNUSED_VAR);
+
+  // a is known to be of type Math. In this case it should produce an error.
+  util.assertLint("var Math = {PI: 3.14}; function test(a) { a.PI(); }; test(Math);", {
+      "messages": [ {
+          "message": "'PI' is not a function",
+          "from": 44,
+          "to": 46,
+          "severity": "error",
+		      "file": "test1.js"} ]
+  }, null, null, IGNORE_UNUSED_VAR);
 }
 
 exports['test assignment of unknown value'] = function() {

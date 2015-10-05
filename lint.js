@@ -215,7 +215,15 @@
         // If one of them is a function, type.getFunctionType() will return it.
         var fnType = type.getFunctionType();
         if(fnType == null) {
-          if (notAFunctionRule && !isFunctionType(type)) addMessage(node, "'" + getNodeName(node) + "' is not a function", notAFunctionRule.severity);
+          if (notAFunctionRule && !isFunctionType(type)) {
+            var parentType = infer.expressionType({node: node.callee.object, state: state});
+            if(parentType == null || parentType.isEmpty()) {
+              // Parent type is empty. This means that this type is a guess at best. To prevent false
+              // warnings, we ignore this case.
+            } else {
+              addMessage(node, "'" + getNodeName(node) + "' is not a function", notAFunctionRule.severity);
+            }
+          }
           return;
         }
         var fnLint = getFunctionLint(fnType);
